@@ -2,15 +2,7 @@ import logging
 import socket
 import pickle
 import streamlit as st
-import itertools
-import os
-
-# Add this at the beginning of the script
-logging.basicConfig(level=logging.DEBUG)
-
-def xor_encrypt_decrypt(message, key):
-    encrypted_message = bytes([message_byte ^ key_byte for message_byte, key_byte in zip(message, itertools.cycle(key.encode()))])
-    return encrypted_message
+import utils
 
 @st.cache_resource
 def initialize_socket(port):
@@ -23,14 +15,6 @@ def receive_deck(_client_socket):
         data = _client_socket.recv(1024)
         data = pickle.loads(data)
         return data
-
-def get_image_path(hand_list, image_dir):
-    image_paths = []
-    for card in hand_list:
-        for image in os.scandir(image_dir):
-            if card['suit'] in image.name and card['rank'] in image.name:
-                image_paths.append(image.path)
-    return image_paths
 
 if __name__ == "__main__":
     image_dir = 'poker_card_images'
@@ -46,15 +30,13 @@ if __name__ == "__main__":
     if 'received_deck' not in st.session_state:
         st.session_state.received_deck = False
 
+    if 'confirm_clicked' not in st.session_state:
+        st.session_state.confirm_clicked = False
+
     client_socket = initialize_socket(port)
     # st.write(f"Alice connected to Bob on port {port}")
 
     data = receive_deck(client_socket)
-
-    # if not st.session_state.received_deck:
-    #     data = client_socket.recv(1024)
-    #     data = pickle.loads(data)
-    #     st.session_state.received_deck = True
 
     try:
     
@@ -67,51 +49,49 @@ if __name__ == "__main__":
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
                 image1 = st.image("poker_card_images/card back orange.png")
-                number1 = st.number_input('Number 1', label_visibility='collapsed', key='1', min_value=0, max_value=52, value=int(0))
+                number1 = st.number_input('Number 1', label_visibility='collapsed', key='1', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col2:
                 image2 = st.image("poker_card_images/card back orange.png")
-                number2 = st.number_input('Number 2', label_visibility='collapsed', key='2', min_value=0, max_value=52, value=int(0))
+                number2 = st.number_input('Number 2', label_visibility='collapsed', key='2', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col3:
                 image3 = st.image("poker_card_images/card back orange.png")
-                number3 = st.number_input('Number 3', label_visibility='collapsed', key='3', min_value=0, max_value=52, value=int(0))
+                number3 = st.number_input('Number 3', label_visibility='collapsed', key='3', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col4:
                 image4 = st.image("poker_card_images/card back orange.png")
-                number4 = st.number_input('Number 4', label_visibility='collapsed', key='4', min_value=0, max_value=52, value=int(0))
+                number4 = st.number_input('Number 4', label_visibility='collapsed', key='4', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col5:
                 image5 = st.image("poker_card_images/card back orange.png")
-                number5 = st.number_input('Number 5', label_visibility='collapsed', key='5', min_value=0, max_value=52, value=int(0))
+                number5 = st.number_input('Number 5', label_visibility='collapsed', key='5', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
 
 
             pick_5_bob = st.subheader("Pick 5 numbers for Bob.")
             col1, col2, col3, col4, col5 = st.columns(5)
             with col1:
                 image6 = st.image("poker_card_images/card back orange.png")
-                number6 = st.number_input('Number 1', label_visibility='collapsed', key='6', min_value=0, max_value=52, value=int(0))
+                number6 = st.number_input('Number 1', label_visibility='collapsed', key='6', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col2:
                 image7 = st.image("poker_card_images/card back orange.png")
-                number7 = st.number_input('Number 2', label_visibility='collapsed', key='7', min_value=0, max_value=52, value=int(0))
+                number7 = st.number_input('Number 2', label_visibility='collapsed', key='7', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col3:
                 image8 = st.image("poker_card_images/card back orange.png")
-                number8 = st.number_input('Number 3', label_visibility='collapsed', key='8', min_value=0, max_value=52, value=int(0))
+                number8 = st.number_input('Number 3', label_visibility='collapsed', key='8', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col4:
                 image9 = st.image("poker_card_images/card back orange.png")
-                number9 = st.number_input('Number 4', label_visibility='collapsed', key='9', min_value=0, max_value=52, value=int(0))
+                number9 = st.number_input('Number 4', label_visibility='collapsed', key='9', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
             with col5:
                 image10 = st.image("poker_card_images/card back orange.png")
-                number10 = st.number_input('Number 5', label_visibility='collapsed', key='10', min_value=0, max_value=52, value=int(0))
+                number10 = st.number_input('Number 5', label_visibility='collapsed', key='10', min_value=0, max_value=52, value=int(0), disabled=st.session_state.confirm_clicked)
 
-            confirm_numbers = st.button("Confirm numbers")
+            confirm_numbers = st.button("Confirm numbers", disabled=st.session_state.confirm_clicked)
 
             if confirm_numbers:
-                pick_5_alice.empty()
-                pick_5_bob.empty()
-                col1.empty()
-                col2.empty()
-                col3.empty()
-                col4.empty()
-                col5.empty()
+                st.session_state.confirm_clicked = True
                 alice_numbers = [number1, number2, number3, number4, number5]
                 bob_numbers = [number6, number7, number8, number9, number10]
+                alice_num_str = ', '.join(str(num) for num in alice_numbers)
+                bob_num_str = ', '.join(str(num) for num in bob_numbers)
+                st.write(f"The chosen numbers for Alice is: {alice_num_str}")
+                st.write(f"The chosen numbers for Bob is: {bob_num_str}")
                 st.session_state.picked = True
 
         if st.session_state.picked:
@@ -129,32 +109,34 @@ if __name__ == "__main__":
             st.session_state.game_ended = True
 
         if st.session_state.game_ended:
-            st.write("Alice's Picked Cards: ")
-            alice_card_images = get_image_path(alice_hand, image_dir)
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                st.image(alice_card_images[0])
-            with col2:
-                st.image(alice_card_images[1])
-            with col3:
-                st.image(alice_card_images[2])
-            with col4:
-                st.image(alice_card_images[3])
-            with col5:
-                st.image(alice_card_images[4])
+            st.write("Alice's Hand: ")
+            alice_card_images = utils.get_image_path(alice_hand, image_dir)
+            utils.show_5_images(alice_card_images)
+            # col1, col2, col3, col4, col5 = st.columns(5)
+            # with col1:
+            #     st.image(alice_card_images[0])
+            # with col2:
+            #     st.image(alice_card_images[1])
+            # with col3:
+            #     st.image(alice_card_images[2])
+            # with col4:
+            #     st.image(alice_card_images[3])
+            # with col5:
+            #     st.image(alice_card_images[4])
             st.write("Bob's Hand: ")
-            bob_card_images = get_image_path(bob_picked_cards, image_dir)
-            col1, col2, col3, col4, col5 = st.columns(5)
-            with col1:
-                st.image(bob_card_images[0])
-            with col2:
-                st.image(bob_card_images[1])
-            with col3:
-                st.image(bob_card_images[2])
-            with col4:
-                st.image(bob_card_images[3])
-            with col5:
-                st.image(bob_card_images[4])
+            bob_card_images = utils.get_image_path(bob_picked_cards, image_dir)
+            utils.show_5_images(bob_card_images)
+            # col1, col2, col3, col4, col5 = st.columns(5)
+            # with col1:
+            #     st.image(bob_card_images[0])
+            # with col2:
+            #     st.image(bob_card_images[1])
+            # with col3:
+            #     st.image(bob_card_images[2])
+            # with col4:
+            #     st.image(bob_card_images[3])
+            # with col5:
+            #     st.image(bob_card_images[4])
             
 
     finally:

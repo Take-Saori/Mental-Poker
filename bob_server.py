@@ -1,27 +1,13 @@
 import socket
 import pickle
 import streamlit as st
-import itertools
-import os
-
-
-def xor_encrypt_decrypt(message, key):
-    encrypted_message = bytes([message_byte ^ key_byte for message_byte, key_byte in zip(message, itertools.cycle(key.encode()))])
-    return encrypted_message
+import utils
 
 def generate_deck():
     suits = ['hearts', 'diamonds', 'clubs', 'spades']
     ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
     deck = [{'suit': suit, 'rank': rank} for suit in suits for rank in ranks]
     return deck
-
-def get_image_path(hand_list, image_dir):
-    image_paths = []
-    for card in hand_list:
-        for image in os.scandir(image_dir):
-            if card['suit'] in image.name and card['rank'] in image.name:
-                image_paths.append(image.path)
-    return image_paths
 
 if __name__ == "__main__":
     image_dir = 'poker_card_images'
@@ -75,29 +61,31 @@ if __name__ == "__main__":
 
     if st.session_state.game_ended:
         st.write("Bob's Hand: ")
-        bob_card_images = get_image_path(bob_picked_cards, image_dir)
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.image(bob_card_images[0])
-        with col2:
-            st.image(bob_card_images[1])
-        with col3:
-            st.image(bob_card_images[2])
-        with col4:
-            st.image(bob_card_images[3])
-        with col5:
-            st.image(bob_card_images[4])
+        bob_card_images = utils.get_image_path(bob_picked_cards, image_dir)
+        utils.show_5_images(bob_card_images)
+        # col1, col2, col3, col4, col5 = st.columns(5)
+        # with col1:
+        #     st.image(bob_card_images[0])
+        # with col2:
+        #     st.image(bob_card_images[1])
+        # with col3:
+        #     st.image(bob_card_images[2])
+        # with col4:
+        #     st.image(bob_card_images[3])
+        # with col5:
+        #     st.image(bob_card_images[4])
 
-        st.write("Alice's Picked Cards: ")
-        alice_card_images = get_image_path(alice_picked_cards, image_dir)
-        col1, col2, col3, col4, col5 = st.columns(5)
-        with col1:
-            st.image(alice_card_images[0])
-        with col2:
-            st.image(alice_card_images[1])
-        with col3:
-            st.image(alice_card_images[2])
-        with col4:
-            st.image(alice_card_images[3])
-        with col5:
-            st.image(alice_card_images[4])
+        st.write("Alice's Hand: ")
+        alice_card_images = utils.get_image_path(alice_picked_cards, image_dir)
+        utils.show_5_images(alice_card_images)
+        # col1, col2, col3, col4, col5 = st.columns(5)
+        # with col1:
+        #     st.image(alice_card_images[0])
+        # with col2:
+        #     st.image(alice_card_images[1])
+        # with col3:
+        #     st.image(alice_card_images[2])
+        # with col4:
+        #     st.image(alice_card_images[3])
+        # with col5:
+        #     st.image(alice_card_images[4])
