@@ -2,16 +2,14 @@ import socket
 import pickle
 import streamlit as st
 import utils
-
-def generate_deck():
-    suits = ['hearts', 'diamonds', 'clubs', 'spades']
-    ranks = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'jack', 'queen', 'king', 'ace']
-    deck = [{'suit': suit, 'rank': rank} for suit in suits for rank in ranks]
-    return deck
+import deck_utils
+from protocol import Protocol
+import random
 
 if __name__ == "__main__":
     image_dir = 'poker_card_images'
     port = 52625
+    bob_protocol = Protocol()
     st.title("Bob's Poker Game")
 
     if 'alice_in_game' not in st.session_state:
@@ -39,7 +37,12 @@ if __name__ == "__main__":
         
         if st.session_state.alice_in_game and 'ip_address' in st.session_state:
             if not st.session_state.sent_deck:
-                deck = generate_deck()
+                deck = [i+2 for i in range(52)]
+                random.shuffle(deck)
+                # Encrypt deck
+                for i in range(len(deck)):
+                    deck[i] = bob_protocol.get_encrypted_card(deck[i])
+
                 serialized_deck = pickle.dumps(deck)
                 st.session_state.ip_address.send(serialized_deck)
                 st.session_state.sent_deck = True
@@ -49,10 +52,22 @@ if __name__ == "__main__":
             wait_picked_cards_message.empty()
 
             alice_picked_cards = picked_cards[0]
-            bob_picked_cards = picked_cards[1]
+            bob_hand = picked_cards[1]
 
-            st.session_state.ip_address.send(pickle.dumps(alice_picked_cards))
+            # Decrypt bob's hand using bob's key
+            for i in range(len(bob_hand)):
+                bob_hand[i] = bob_protocol.get_decrypted_card(bob_hand[i])
+            
+            # Decrypt alice's hand using bob's key, so only alice's "lock" on her hand
+            for i in range(len(alice_picked_cards)):
+                alice_picked_cards[i] = bob_protocol.get_decrypted_card(alice_picked_cards[i])
+
+            # Send both cards so that they know each other's cards after game ends
+            st.session_state.ip_address.send(pickle.dumps([alice_picked_cards, bob_hand]))
             # st.write("Sent Alice's cards!")
+
+            # Receive decrypted alice's hand
+            alice_hand = pickle.loads(st.session_state.ip_address.recv(40000))
             st.session_state.game_ended = True
 
 
@@ -60,32 +75,26 @@ if __name__ == "__main__":
         server_socket.close()
 
     if st.session_state.game_ended:
-        st.write("Bob's Hand: ")
-        bob_card_images = utils.get_image_path(bob_picked_cards, image_dir)
-        utils.show_5_images(bob_card_images)
-        # col1, col2, col3, col4, col5 = st.columns(5)
-        # with col1:
-        #     st.image(bob_card_images[0])
-        # with col2:
-        #     st.image(bob_card_images[1])
-        # with col3:
-        #     st.image(bob_card_images[2])
-        # with col4:
-        #     st.image(bob_card_images[3])
-        # with col5:
-        #     st.image(bob_card_images[4])
+        # Convert the card_id to card suit and ranks
+        for i in range(len(alice_hand)):
+            alice_hand[i] = deck_utils.convert_id_to_card(alice_hand[i])
+        for i in range(len(bob_hand)):
+            bob_hand[i] = deck_utils.convert_id_to_card(bob_hand[i])
 
-        st.write("Alice's Hand: ")
-        alice_card_images = utils.get_image_path(alice_picked_cards, image_dir)
+        winner = utils.get_winner(alice_hand, bob_hand)
+        if winner == 'Draw':
+            st.header('Draw!')
+        elif winner == 'Bob':
+            st.header('You Won!')
+        else: # Alice winner
+            st.header('You Lost...')
+
+        st.subheader(f"Bob's Hand: {utils.hand_name(bob_hand)}")
+        bob_card_images = utils.get_image_path(bob_hand, image_dir)
+        utils.show_5_images(bob_card_images)
+
+        st.subheader(f"Alice's Hand: {utils.hand_name(alice_hand)}")
+        alice_card_images = utils.get_image_path(alice_hand, image_dir)
         utils.show_5_images(alice_card_images)
-        # col1, col2, col3, col4, col5 = st.columns(5)
-        # with col1:
-        #     st.image(alice_card_images[0])
-        # with col2:
-        #     st.image(alice_card_images[1])
-        # with col3:
-        #     st.image(alice_card_images[2])
-        # with col4:
-        #     st.image(alice_card_images[3])
-        # with col5:
-        #     st.image(alice_card_images[4])
+
+        
